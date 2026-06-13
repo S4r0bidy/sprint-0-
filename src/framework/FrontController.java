@@ -26,8 +26,18 @@ public class FrontController extends HttpServlet {
         // Extraire la partie de l'URL après le contexte
         String url = uri.substring(context.length());
 
+        response.getWriter().println(
+            "FrontController appelé"
+        );
+        
         // Afficher l'URL demandée
         response.getWriter().println(
-                "URL demandée : " + url + " contexte : " + context + " uri : " + uri);
+        "URL : " + uri);
+
+        response.getWriter().println(
+        "Contexte : " + context);
+
+        response.getWriter().println(
+        "URL demandée : " + url);
     }
 }
