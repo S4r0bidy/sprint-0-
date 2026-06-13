@@ -35,9 +35,7 @@ mkdir "%TOMCAT%\webapps\%PROJECT%"
 mkdir "%TOMCAT%\webapps\%PROJECT%\WEB-INF"
 mkdir "%TOMCAT%\webapps\%PROJECT%\WEB-INF\classes"
 
-xcopy build ^
-"%TOMCAT%\webapps\%PROJECT%\WEB-INF\classes" ^
-/E /I /Y
+xcopy build "%TOMCAT%\webapps\%PROJECT%\WEB-INF\classes" /E /I /Y
 
 copy WEB-INF\web.xml ^
 "%TOMCAT%\webapps\%PROJECT%\WEB-INF"
@@ -48,7 +46,7 @@ echo DEPLOIEMENT TERMINE
 echo ==========================
 echo.
 echo Tester :
-echo http://localhost:8080/%PROJECT%/users
+echo http://localhost:8081/%PROJECT%/users
 echo.
 
 pause

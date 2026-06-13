@@ -1,21 +1,15 @@
 package framework;
 
-import javax.servlet.*;
-import javax.servlet.http.*;
-import javax.servlet.annotation.WebServlet;
-
 import java.io.IOException;
+import java.lang.reflect.Method;
+import java.util.HashMap;
 
-@WebServlet(urlPatterns = "/*")
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
 public class FrontController extends HttpServlet {
-
-    @Override
-    public void init() {
-
-        routes.put(
-                "/users",
-                "controller.UserController:list");
-    }
 
     @Override
     protected void doGet(
@@ -23,18 +17,17 @@ public class FrontController extends HttpServlet {
             HttpServletResponse response)
             throws ServletException, IOException {
 
-        // Récupération de l'URL demandée
+        // Récupérer l'URL demandée
         String uri = request.getRequestURI();
 
-        // Récupération du contexte de l'application
+        // Récupérer le contexte de l'application
         String context = request.getContextPath();
 
-        // Extraction de la partie de l'URL après le contexte
+        // Extraire la partie de l'URL après le contexte
         String url = uri.substring(context.length());
 
-        // Affichage de l'URL dans la réponse
+        // Afficher l'URL demandée
         response.getWriter().println(
-                "FrontController appelé"
-                        + " pour l'URL : " + url);
+                "URL demandée : " + url + " contexte : " + context + " uri : " + uri);
     }
 }
