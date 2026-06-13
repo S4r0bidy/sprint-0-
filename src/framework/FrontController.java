@@ -10,6 +10,14 @@ import java.io.IOException;
 public class FrontController extends HttpServlet {
 
     @Override
+    public void init() {
+
+        routes.put(
+                "/users",
+                "controller.UserController:list");
+    }
+
+    @Override
     protected void doGet(
             HttpServletRequest request,
             HttpServletResponse response)
