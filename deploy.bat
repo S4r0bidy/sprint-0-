@@ -15,6 +15,7 @@ javac ^
 -cp "%TOMCAT%\lib\*" ^
 -d build ^
 src\framework\*.java ^
+src\framework\annotation\*.java ^
 src\controller\*.java
 
 if errorlevel 1 (
