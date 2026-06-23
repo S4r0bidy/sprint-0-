@@ -8,11 +8,11 @@ public class UserController {
     @GetMapping("/users")
     public String list() {
 
-        return "Bonjour depuis UserController";
+        return "Appel de la methode list";
     }
     @GetMapping("/users/test")
     public String test() {
 
-        return "Test depuis UserController";
+        return "Appel de la methode test";
     }
 }

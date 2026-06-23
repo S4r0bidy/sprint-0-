@@ -4,7 +4,6 @@ import framework.Mapping;
 import framework.annotation.Controller;
 import framework.annotation.GetMapping;
 
-
 import java.io.IOException;
 import java.lang.reflect.Method;
 import java.util.HashMap;
@@ -42,11 +41,20 @@ public class FrontController extends HttpServlet {
                         // Récupérer le contexte de l'application
                         String context = request.getContextPath();
 
+
                         // Extraire la partie de l'URL après le contexte
                         String url = uri.substring(context.length());
                         if (url == null || url.isEmpty()) {
                                 url = "/";
                         }
+
+                        // Afficher l'URL demandée
+                        response.getWriter().println(
+                                        "URL : " + uri);
+
+
+                        response.getWriter().println(
+                                        "URL demandée : " + url);
 
                         // Trouver la route correspondante
                         Mapping mapping = routes.get(url);
