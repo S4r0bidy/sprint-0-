@@ -12,3 +12,7 @@
     - regarde l'URL demandé
     - décide quel controleur doit etre executé
     - renvoie la réponse
+
+
+## sprint-3-
+- création annotation @Url qui supporte une deuxieme argument: @Url("test", GET )
