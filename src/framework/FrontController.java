@@ -56,12 +56,23 @@ public class FrontController extends HttpServlet {
                         response.getWriter().println(
                                         "URL demandée : " + url);
 
+                        // Cas spécial : / (aucun chemin) => afficher toutes les routes trouvées
+                        if ("/".equals(url)) {
+                                response.getWriter().println("Routes disponibles :");
+                                for (String route : routes.keySet()) {
+                                        Mapping m = routes.get(route);
+                                        response.getWriter().println("- " + route + " -> " + m.getClassName() + "#" + m.getMethodName());
+                                }
+                                return;
+                        }
+
                         // Trouver la route correspondante
                         Mapping mapping = routes.get(url);
                         if (mapping == null) {
                                 response.getWriter().println("404 - Route introuvable : " + url);
                                 return;
                         }
+
 
                         Class<?> clazz = Class.forName(mapping.getClassName());
                         Object controller = clazz.getDeclaredConstructor().newInstance();
