@@ -13,6 +13,16 @@
     - décide quel controleur doit etre executé
     - renvoie la réponse
 
+## sprint-0-
+- tous URL doit passer dans le FrontControllerServlet
+
+## sprint-1-
+
+## sprint-2-
+- affichage des methodes utilisé d'une URL donnée 
 
 ## sprint-3-
 - création annotation @Url qui supporte une deuxieme argument: @Url("test", GET )
+
+## sprint-4-
+- integration vues
