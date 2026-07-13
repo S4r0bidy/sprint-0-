@@ -14,7 +14,7 @@
     - renvoie la réponse
 
 ## sprint-0-
-- tous URL doit passer dans le FrontControllerServlet
+- tous URL doit passer dans le FrontController
 
 ## sprint-1-
 
