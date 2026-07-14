@@ -11,8 +11,12 @@ public class UserController {
         return "Appel de la methode list";
     }
     @GetMapping("/users/test")
-    public String test() {
+    public String testGet() {
+        return "Appel de la methode test GET";
+    }
 
-        return "Appel de la methode test";
+    @PostMapping("/users/test")
+    public String testPost() {
+        return "Appel de la methode test POST";
     }
 }

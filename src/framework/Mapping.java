@@ -4,12 +4,12 @@ public class Mapping {
 
     private String className;
     private String methodName;
+    private String httpMethod; // "GET" or "POST"
 
-    public Mapping(String className,
-                   String methodName) {
-
+    public Mapping(String className, String methodName, String httpMethod) {
         this.className = className;
         this.methodName = methodName;
+        this.httpMethod = httpMethod;
     }
 
     public String getClassName() {
@@ -18,5 +18,9 @@ public class Mapping {
 
     public String getMethodName() {
         return methodName;
+    }
+
+    public String getHttpMethod() {
+        return httpMethod;
     }
 }

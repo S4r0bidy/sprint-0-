@@ -1,8 +1,6 @@
 package framework;
 
 import framework.Mapping;
-import framework.annotation.Controller;
-import framework.annotation.GetMapping;
 
 import java.io.IOException;
 import java.lang.reflect.Method;
@@ -15,7 +13,20 @@ import javax.servlet.http.HttpServletResponse;
 
 public class FrontController extends HttpServlet {
 
-        private HashMap<String, Mapping> routes = new HashMap<>();
+        private HashMap<String, Mapping> routesGet = new HashMap<>();
+        private HashMap<String, Mapping> routesPost = new HashMap<>();
+
+        private Mapping resolveRoute(String url, String httpMethod) {
+                if ("GET".equals(httpMethod)) {
+                        return routesGet.get(url);
+                }
+                if ("POST".equals(httpMethod)) {
+                        return routesPost.get(url);
+                }
+                return null;
+        }
+
+
 
         @Override
         public void init() {
@@ -28,11 +39,13 @@ public class FrontController extends HttpServlet {
                 }
         }
 
+
         @Override
         protected void doGet(
                         HttpServletRequest request,
                         HttpServletResponse response)
                         throws ServletException, IOException {
+
 
                 try {
                         // Récupérer l'URL demandée
@@ -57,7 +70,7 @@ public class FrontController extends HttpServlet {
                                         "URL demandée : " + url);
 
                         // Trouver la route correspondante
-                        Mapping mapping = routes.get(url);
+                        Mapping mapping = routesGet.get(url);
                         if (mapping == null) {
                                 response.getWriter().println("404 - Route introuvable : " + url);
                                 return;
@@ -73,6 +86,7 @@ public class FrontController extends HttpServlet {
                         Method method = clazz.getMethod(methodName);
                         Object result = method.invoke(controller);
 
+                        response.getWriter().println("HTTP method utilisée: GET");
                         response.getWriter().println("Méthode appelée: " + methodName);
                         response.getWriter().println(result);
 
@@ -103,19 +117,88 @@ public class FrontController extends HttpServlet {
 
                 for (Method method : methods) {
 
-                        if (!method.isAnnotationPresent(framework.annotation.GetMapping.class)) {
-                                continue;
+                        // GET
+                        if (method.isAnnotationPresent(framework.annotation.GetMapping.class)) {
+
+                                framework.annotation.GetMapping gm = method
+                                                .getAnnotation(framework.annotation.GetMapping.class);
+
+                                String url = gm.value();
+
+                                routesGet.put(url, new Mapping(clazz.getName(), method.getName(), "GET"));
+
+                                // Affiche la route + méthode appelée
+                                System.out.println(
+                                                "Route: " + url + " [GET] -> " + clazz.getName() + "#" + method.getName());
                         }
 
-                        framework.annotation.GetMapping gm = method
-                                        .getAnnotation(framework.annotation.GetMapping.class);
+                        // POST
+                        if (method.isAnnotationPresent(framework.annotation.PostMapping.class)) {
 
-                        String url = gm.value();
+                                framework.annotation.PostMapping pm = method
+                                                .getAnnotation(framework.annotation.PostMapping.class);
 
-                        routes.put(url, new Mapping(clazz.getName(), method.getName()));
+                                String url = pm.value();
 
-                        // Affiche la route + méthode appelée
-                        System.out.println("Route: " + url + " -> " + clazz.getName() + "#" + method.getName());
+                                routesPost.put(url, new Mapping(clazz.getName(), method.getName(), "POST"));
+
+                                // Affiche la route + méthode appelée
+                                System.out.println(
+                                                "Route: " + url + " [POST] -> " + clazz.getName() + "#" + method.getName());
+                        }
+                }
+        }
+
+        @Override
+        protected void doPost(
+                        HttpServletRequest request,
+                        HttpServletResponse response)
+                        throws ServletException, IOException {
+
+                try {
+                        // Récupérer l'URL demandée
+                        String uri = request.getRequestURI();
+
+                        // Récupérer le contexte de l'application
+                        String context = request.getContextPath();
+
+                        // Extraire la partie de l'URL après le contexte
+                        String url = uri.substring(context.length());
+                        if (url == null || url.isEmpty()) {
+                                url = "/";
+                        }
+
+                        // Afficher l'URL demandée
+                        response.getWriter().println(
+                                        "URL : " + uri);
+
+                        response.getWriter().println(
+                                        "URL demandée : " + url);
+
+                        // Trouver la route correspondante
+                        Mapping mapping = routesPost.get(url);
+                        if (mapping == null) {
+                                response.getWriter().println("404 - Route introuvable : " + url);
+                                return;
+                        }
+
+                        Class<?> clazz = Class.forName(mapping.getClassName());
+                        Object controller = clazz.getDeclaredConstructor().newInstance();
+
+                        // Récupérer la méthode par son nom
+                        String methodName = mapping.getMethodName();
+                        System.out.println("Appel: " + mapping.getClassName() + "#" + methodName);
+
+                        Method method = clazz.getMethod(methodName);
+                        Object result = method.invoke(controller);
+
+                        response.getWriter().println("HTTP method utilisée: POST");
+                        response.getWriter().println("Méthode appelée: " + methodName);
+                        response.getWriter().println(result);
+
+                } catch (Exception e) {
+                        e.printStackTrace();
+                        response.getWriter().println("Erreur : " + e.getMessage());
                 }
         }
 }
