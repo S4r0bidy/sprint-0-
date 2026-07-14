@@ -1,11 +1,6 @@
-## sprint-1-
+# TODO
+- [ ] Créer un Listener (ServletContextListener) pour scanner les controllers et remplir les routes.
+- [ ] Modifier FrontController pour supprimer la logique de scan depuis init() et utiliser les routes préparées par le Listener.
+- [ ] Mettre à jour WEB-INF/web.xml pour enregistrer le listener.
+- [ ] Vérifier le fonctionnement (GET /users, GET /users/test, POST /users/test).
 
-## sprint-2-
-- affichage des methodes utilisé d'une URL donnée 
-
-## sprint-3-
-- création annotation @Url qui supporte une deuxieme argument: @Url("test", GET ),
-- ajouter la prise en charge de deux méthodes HTTP (`GET` et `POST`) dans le FrontController
-
-## sprint-4-
-- integration vues

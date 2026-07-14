@@ -11,33 +11,43 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+
+
 public class FrontController extends HttpServlet {
 
-        private HashMap<String, Mapping> routesGet = new HashMap<>();
-        private HashMap<String, Mapping> routesPost = new HashMap<>();
+
+        private HashMap<String, Mapping> routesGet() {
+                Object value = getServletContext().getAttribute(ControllerScannerListener.ATTR_ROUTES_GET);
+                if (value instanceof HashMap<?, ?>) {
+                        return (HashMap<String, Mapping>) value;
+                }
+                return new HashMap<>();
+        }
+
+        private HashMap<String, Mapping> routesPost() {
+                Object value = getServletContext().getAttribute(ControllerScannerListener.ATTR_ROUTES_POST);
+                if (value instanceof HashMap<?, ?>) {
+                        return (HashMap<String, Mapping>) value;
+                }
+                return new HashMap<>();
+        }
+
+
 
         private Mapping resolveRoute(String url, String httpMethod) {
                 if ("GET".equals(httpMethod)) {
-                        return routesGet.get(url);
+                        return routesGet().get(url);
                 }
                 if ("POST".equals(httpMethod)) {
-                        return routesPost.get(url);
+                        return routesPost().get(url);
                 }
+
                 return null;
         }
 
 
 
-        @Override
-        public void init() {
-                try {
-                        System.out.println("=== Scan des controllers ===");
-                        scanController("controller.UserController");
-                        System.out.println("=== Fin scan des controllers ===");
-                } catch (Exception e) {
-                        e.printStackTrace();
-                }
-        }
+
 
 
         @Override
@@ -70,7 +80,8 @@ public class FrontController extends HttpServlet {
                                         "URL demandée : " + url);
 
                         // Trouver la route correspondante
-                        Mapping mapping = routesGet.get(url);
+                        Mapping mapping = routesGet().get(url);
+
                         if (mapping == null) {
                                 response.getWriter().println("404 - Route introuvable : " + url);
                                 return;
@@ -98,56 +109,7 @@ public class FrontController extends HttpServlet {
                 }
         }
 
-        private void scanController(
-                        String className)
-                        throws Exception {
 
-                Class<?> clazz = Class.forName(className);
-
-                System.out.println("Controller trouvé: " + clazz.getName());
-
-                if (!clazz.isAnnotationPresent(
-                                framework.annotation.Controller.class)) {
-
-                        System.out.println("Ignoré (pas @Controller): " + clazz.getName());
-                        return;
-                }
-
-                Method[] methods = clazz.getDeclaredMethods();
-
-                for (Method method : methods) {
-
-                        // GET
-                        if (method.isAnnotationPresent(framework.annotation.GetMapping.class)) {
-
-                                framework.annotation.GetMapping gm = method
-                                                .getAnnotation(framework.annotation.GetMapping.class);
-
-                                String url = gm.value();
-
-                                routesGet.put(url, new Mapping(clazz.getName(), method.getName(), "GET"));
-
-                                // Affiche la route + méthode appelée
-                                System.out.println(
-                                                "Route: " + url + " [GET] -> " + clazz.getName() + "#" + method.getName());
-                        }
-
-                        // POST
-                        if (method.isAnnotationPresent(framework.annotation.PostMapping.class)) {
-
-                                framework.annotation.PostMapping pm = method
-                                                .getAnnotation(framework.annotation.PostMapping.class);
-
-                                String url = pm.value();
-
-                                routesPost.put(url, new Mapping(clazz.getName(), method.getName(), "POST"));
-
-                                // Affiche la route + méthode appelée
-                                System.out.println(
-                                                "Route: " + url + " [POST] -> " + clazz.getName() + "#" + method.getName());
-                        }
-                }
-        }
 
         @Override
         protected void doPost(
@@ -176,7 +138,8 @@ public class FrontController extends HttpServlet {
                                         "URL demandée : " + url);
 
                         // Trouver la route correspondante
-                        Mapping mapping = routesPost.get(url);
+                        Mapping mapping = routesPost().get(url);
+
                         if (mapping == null) {
                                 response.getWriter().println("404 - Route introuvable : " + url);
                                 return;
