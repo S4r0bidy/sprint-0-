@@ -7,16 +7,18 @@ public class UserController {
 
     @GetMapping("/users")
     public String list() {
-        return "Appel de la methode list";
+        // Nom de vue (sera transformé en path via prefix/suffix)
+        return "users";
     }
     
     @GetMapping("/users/test")
     public String testGet() {
-        return "Appel de la methode test GET";
+        return "users/test";
     }
 
     @PostMapping("/users/test")
     public String testPost() {
-        return "Appel de la methode test POST";
+        return "users/test";
     }
 }
+

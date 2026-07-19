@@ -99,7 +99,27 @@ public class FrontController extends HttpServlet {
 
                         response.getWriter().println("HTTP method utilisée: GET");
                         response.getWriter().println("Méthode appelée: " + methodName);
+
+                        // Intégration des vues : si le controller renvoie une String,
+                        // on interprète cette String comme le nom de la vue.
+                        if (result instanceof String) {
+                                String viewName = (String) result;
+                                String prefix = getServletContext().getInitParameter("viewPrefix");
+                                String suffix = getServletContext().getInitParameter("viewSuffix");
+                                if (prefix == null) {
+                                        prefix = "/WEB-INF/views/";
+                                }
+                                if (suffix == null) {
+                                        suffix = ".jsp";
+                                }
+
+                                String viewPath = prefix + viewName + suffix;
+                                request.getRequestDispatcher(viewPath).forward(request, response);
+                                return;
+                        }
+
                         response.getWriter().println(result);
+
 
                 } catch (Exception e) {
                         e.printStackTrace();
@@ -157,7 +177,27 @@ public class FrontController extends HttpServlet {
 
                         response.getWriter().println("HTTP method utilisée: POST");
                         response.getWriter().println("Méthode appelée: " + methodName);
+
+                        // Intégration des vues : si le controller renvoie une String,
+                        // on interprète cette String comme le nom de la vue.
+                        if (result instanceof String) {
+                                String viewName = (String) result;
+                                String prefix = getServletContext().getInitParameter("viewPrefix");
+                                String suffix = getServletContext().getInitParameter("viewSuffix");
+                                if (prefix == null) {
+                                        prefix = "/WEB-INF/views/";
+                                }
+                                if (suffix == null) {
+                                        suffix = ".jsp";
+                                }
+
+                                String viewPath = prefix + viewName + suffix;
+                                request.getRequestDispatcher(viewPath).forward(request, response);
+                                return;
+                        }
+
                         response.getWriter().println(result);
+
 
                 } catch (Exception e) {
                         e.printStackTrace();
