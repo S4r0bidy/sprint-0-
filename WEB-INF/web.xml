@@ -23,5 +23,14 @@
         <url-pattern>/*</url-pattern>
     </servlet-mapping>
 
+    <!-- Intégration des vues via prefix/suffix -->
+    <context-param>
+        <param-name>viewPrefix</param-name>
+        <param-value>/WEB-INF/views/</param-value>
+    </context-param>
+    <context-param>
+        <param-name>viewSuffix</param-name>
+        <param-value>.jsp</param-value>
+    </context-param>
 
 </web-app>
