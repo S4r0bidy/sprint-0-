@@ -2,13 +2,13 @@ package controller;
 
 import framework.annotation.*;
 
-@Controller
+@ApiRest
 public class UserController {
 
-    @GetMapping("/users")
-    public String list() {
-        // Nom de vue (sera transformé en path via prefix/suffix)
-        return "users";
+    @GetMapping("/bonjour")
+    public String direBonjour() {
+        // Logique pour lister les utilisateurs
+        return "Bonjour !";
     }
     
     @GetMapping("/users/test")
