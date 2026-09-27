@@ -1,207 +1,73 @@
 package framework;
 
-import framework.Mapping;
-
-import java.io.IOException;
-import java.lang.reflect.Method;
-import java.util.HashMap;
-
 import javax.servlet.ServletException;
+import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.lang.reflect.Method;
+import java.util.Map;
 
-
-
+@WebServlet("/*")
 public class FrontController extends HttpServlet {
 
+    @Override
+    protected void doGet(HttpServletRequest req, HttpServletResponse res) throws ServletException, IOException {
+        handleRequest(req, res, "GET");
+    }
 
-        private HashMap<String, Mapping> routesGet() {
-                Object value = getServletContext().getAttribute(ControllerScannerListener.ATTR_ROUTES_GET);
-                if (value instanceof HashMap<?, ?>) {
-                        return (HashMap<String, Mapping>) value;
-                }
-                return new HashMap<>();
+    @Override
+    protected void doPost(HttpServletRequest req, HttpServletResponse res) throws ServletException, IOException {
+        handleRequest(req, res, "POST");
+    }
+
+    private void handleRequest(HttpServletRequest req, HttpServletResponse res, String method) 
+            throws ServletException, IOException {
+        
+        // Récupère l'URL après le contexte
+        String url = req.getRequestURI().substring(req.getContextPath().length());
+        if (url.isEmpty()) url = "/";
+
+        System.out.println("[FrontController] " + method + " " + url);
+
+        // Cherche le mapping
+        Map<String, Mapping> routes = ("GET".equals(method)) 
+            ? (Map<String, Mapping>) getServletContext().getAttribute("routesGet")
+            : (Map<String, Mapping>) getServletContext().getAttribute("routesPost");
+
+        if (routes == null || !routes.containsKey(url)) {
+            res.sendError(HttpServletResponse.SC_NOT_FOUND, "Route not found: " + method + " " + url);
+            return;
         }
 
-        private HashMap<String, Mapping> routesPost() {
-                Object value = getServletContext().getAttribute(ControllerScannerListener.ATTR_ROUTES_POST);
-                if (value instanceof HashMap<?, ?>) {
-                        return (HashMap<String, Mapping>) value;
-                }
-                return new HashMap<>();
+        try {
+            Mapping mapping = routes.get(url);
+            Class<?> controllerClass = Class.forName(mapping.getClassName());
+            Object controller = controllerClass.getDeclaredConstructor().newInstance();
+
+            Method actionMethod = controllerClass.getDeclaredMethod(mapping.getMethodName());
+            Object result = actionMethod.invoke(controller);
+
+            // ✅ Gestion View vs API
+            if ("api".equals(mapping.getControllerType())) {
+                // Pour API : envoyer directement JSON (String)
+                res.setContentType("application/json; charset=UTF-8");
+                res.getWriter().write((String) result);
+            } else {
+                // Pour View MVC : interpréter comme JSP
+                String viewName = (String) result;
+                String viewPrefix = getServletContext().getInitParameter("viewPrefix");
+                String viewSuffix = getServletContext().getInitParameter("viewSuffix");
+
+                String jspPath = viewPrefix + viewName + viewSuffix;
+                getServletContext().getRequestDispatcher(jspPath).forward(req, res);
+            }
+
+        } catch (Exception e) {
+            System.err.println("[FrontController] Error: " + e.getMessage());
+            e.printStackTrace();
+            res.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Controller error: " + e.getMessage());
         }
-
-
-
-        private Mapping resolveRoute(String url, String httpMethod) {
-                if ("GET".equals(httpMethod)) {
-                        return routesGet().get(url);
-                }
-                if ("POST".equals(httpMethod)) {
-                        return routesPost().get(url);
-                }
-
-                return null;
-        }
-
-
-
-
-
-
-        @Override
-        protected void doGet(
-                        HttpServletRequest request,
-                        HttpServletResponse response)
-                        throws ServletException, IOException {
-
-
-                try {
-                        // Récupérer l'URL demandée
-                        String uri = request.getRequestURI();
-
-                        // Récupérer le contexte de l'application
-                        String context = request.getContextPath();
-
-
-                        // Extraire la partie de l'URL après le contexte
-                        String url = uri.substring(context.length());
-                        if (url == null || url.isEmpty()) {
-                                url = "/";
-                        }
-
-                        // Afficher l'URL demandée
-                        response.getWriter().println(
-                                        "URL : " + uri);
-
-
-                        response.getWriter().println(
-                                        "URL demandée : " + url);
-
-                        // Trouver la route correspondante
-                        Mapping mapping = routesGet().get(url);
-
-                        if (mapping == null) {
-                                response.getWriter().println("404 - Route introuvable : " + url);
-                                return;
-                        }
-
-                        Class<?> clazz = Class.forName(mapping.getClassName());
-                        Object controller = clazz.getDeclaredConstructor().newInstance();
-
-                        // Récupérer la méthode par son nom
-                        String methodName = mapping.getMethodName();
-                        System.out.println("Appel: " + mapping.getClassName() + "#" + methodName);
-
-                        Method method = clazz.getMethod(methodName);
-                        Object result = method.invoke(controller);
-
-                        response.getWriter().println("HTTP method utilisée: GET");
-                        response.getWriter().println("Méthode appelée: " + methodName);
-
-                        // Intégration des vues : si le controller renvoie une String,
-                        // on interprète cette String comme le nom de la vue.
-                        if (result instanceof String) {
-                                String viewName = (String) result;
-                                String prefix = getServletContext().getInitParameter("viewPrefix");
-                                String suffix = getServletContext().getInitParameter("viewSuffix");
-                                if (prefix == null) {
-                                        prefix = "/WEB-INF/views/";
-                                }
-                                if (suffix == null) {
-                                        suffix = ".jsp";
-                                }
-
-                                String viewPath = prefix + viewName + suffix;
-                                request.getRequestDispatcher(viewPath).forward(request, response);
-                                return;
-                        }
-
-                        response.getWriter().println(result);
-
-
-                } catch (Exception e) {
-                        e.printStackTrace();
-
-                        response.getWriter()
-                                        .println("Erreur : " + e.getMessage());
-                }
-        }
-
-
-
-        @Override
-        protected void doPost(
-                        HttpServletRequest request,
-                        HttpServletResponse response)
-                        throws ServletException, IOException {
-
-                try {
-                        // Récupérer l'URL demandée
-                        String uri = request.getRequestURI();
-
-                        // Récupérer le contexte de l'application
-                        String context = request.getContextPath();
-
-                        // Extraire la partie de l'URL après le contexte
-                        String url = uri.substring(context.length());
-                        if (url == null || url.isEmpty()) {
-                                url = "/";
-                        }
-
-                        // Afficher l'URL demandée
-                        response.getWriter().println(
-                                        "URL : " + uri);
-
-                        response.getWriter().println(
-                                        "URL demandée : " + url);
-
-                        // Trouver la route correspondante
-                        Mapping mapping = routesPost().get(url);
-
-                        if (mapping == null) {
-                                response.getWriter().println("404 - Route introuvable : " + url);
-                                return;
-                        }
-
-                        Class<?> clazz = Class.forName(mapping.getClassName());
-                        Object controller = clazz.getDeclaredConstructor().newInstance();
-
-                        // Récupérer la méthode par son nom
-                        String methodName = mapping.getMethodName();
-                        System.out.println("Appel: " + mapping.getClassName() + "#" + methodName);
-
-                        Method method = clazz.getMethod(methodName);
-                        Object result = method.invoke(controller);
-
-                        response.getWriter().println("HTTP method utilisée: POST");
-                        response.getWriter().println("Méthode appelée: " + methodName);
-
-                        // Intégration des vues : si le controller renvoie une String,
-                        // on interprète cette String comme le nom de la vue.
-                        if (result instanceof String) {
-                                String viewName = (String) result;
-                                String prefix = getServletContext().getInitParameter("viewPrefix");
-                                String suffix = getServletContext().getInitParameter("viewSuffix");
-                                if (prefix == null) {
-                                        prefix = "/WEB-INF/views/";
-                                }
-                                if (suffix == null) {
-                                        suffix = ".jsp";
-                                }
-
-                                String viewPath = prefix + viewName + suffix;
-                                request.getRequestDispatcher(viewPath).forward(request, response);
-                                return;
-                        }
-
-                        response.getWriter().println(result);
-
-
-                } catch (Exception e) {
-                        e.printStackTrace();
-                        response.getWriter().println("Erreur : " + e.getMessage());
-                }
-        }
+    }
 }

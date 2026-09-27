@@ -1,24 +1,14 @@
 package controller;
 
-import framework.annotation.*;
+import framework.annotation.ApiRest;
+import framework.annotation.GetMapping;
 
 @ApiRest
 public class UserController {
 
-    @GetMapping("/bonjour")
-    public String direBonjour() {
-        // Logique pour lister les utilisateurs
-        return "Bonjour !";
-    }
-    
-    @GetMapping("/users/test")
-    public String testGet() {
-        return "users/test";
-    }
-
-    @PostMapping("/users/test")
-    public String testPost() {
-        return "users/test";
+    @GetMapping("/users")
+    public String listUsers() {
+        System.out.println("UserController.listUsers() called");
+        return "users"; // → forward vers /WEB-INF/views/users.jsp
     }
 }
-
