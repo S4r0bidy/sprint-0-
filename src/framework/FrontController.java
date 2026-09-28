@@ -37,7 +37,9 @@ public class FrontController extends HttpServlet {
             : (Map<String, Mapping>) getServletContext().getAttribute("routesPost");
 
         if (routes == null || !routes.containsKey(url)) {
-            res.sendError(HttpServletResponse.SC_NOT_FOUND, "Route not found: " + method + " " + url);
+            res.setContentType("application/json; charset=UTF-8");
+            res.setStatus(HttpServletResponse.SC_NOT_FOUND);
+            res.getWriter().write("{\"status\":\"error\",\"message\":\"Route not found: " + method + " " + url + "\"}");
             return;
         }
 
@@ -49,25 +51,16 @@ public class FrontController extends HttpServlet {
             Method actionMethod = controllerClass.getDeclaredMethod(mapping.getMethodName());
             Object result = actionMethod.invoke(controller);
 
-            // ✅ Gestion View vs API
-            if ("api".equals(mapping.getControllerType())) {
-                // Pour API : envoyer directement JSON (String)
-                res.setContentType("application/json; charset=UTF-8");
-                res.getWriter().write((String) result);
-            } else {
-                // Pour View MVC : interpréter comme JSP
-                String viewName = (String) result;
-                String viewPrefix = getServletContext().getInitParameter("viewPrefix");
-                String viewSuffix = getServletContext().getInitParameter("viewSuffix");
-
-                String jspPath = viewPrefix + viewName + viewSuffix;
-                getServletContext().getRequestDispatcher(jspPath).forward(req, res);
-            }
+            // Réponse JSON
+            res.setContentType("application/json; charset=UTF-8");
+            res.getWriter().write((String) result);
 
         } catch (Exception e) {
             System.err.println("[FrontController] Error: " + e.getMessage());
             e.printStackTrace();
-            res.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Controller error: " + e.getMessage());
+            res.setContentType("application/json; charset=UTF-8");
+            res.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+            res.getWriter().write("{\"status\":\"error\",\"message\":\"" + e.getMessage() + "\"}");
         }
     }
 }

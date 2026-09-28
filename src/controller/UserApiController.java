@@ -1,20 +1,38 @@
 package controller;
 
+import framework.JsonBuilder;
 import framework.annotation.ApiController;
 import framework.annotation.GetMapping;
-import com.google.gson.Gson;
-import java.util.HashMap;
-import java.util.Map;
+import framework.annotation.PostMapping;
+import java.util.Arrays;
 
 @ApiController
 public class UserApiController {
 
     @GetMapping("/api/users")
-    public String getUsersJson() {
-        Map<String, Object> response = new HashMap<>();
-        response.put("status", "success");
-        response.put("users", new String[]{"Alice", "Bob", "Charlie"});
+    public String listUsers() {
+        return new JsonBuilder()
+            .put("status", "success")
+            .put("data", Arrays.asList("Alice", "Bob", "Charlie"))
+            .put("message", "Users retrieved successfully")
+            .toString();
+    }
 
-        return new Gson().toJson(response); // Retourne JSON directement
+    @GetMapping("/api/users/count")
+    public String getUserCount() {
+        return new JsonBuilder()
+            .put("status", "success")
+            .put("count", 3)
+            .put("message", "Total number of users")
+            .toString();
+    }
+
+    @PostMapping("/api/users")
+    public String createUser() {
+        return new JsonBuilder()
+            .put("status", "success")
+            .put("id", 4)
+            .put("message", "User created successfully")
+            .toString();
     }
 }
