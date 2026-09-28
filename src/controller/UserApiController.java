@@ -13,8 +13,8 @@ public class UserApiController {
     public String listUsers() {
         return new JsonBuilder()
             .put("status", "success")
-            .put("data", Arrays.asList("Alice", "Bob", "Charlie"))
-            .put("message", "Users retrieved successfully")
+            .put("data", Arrays.asList("Sarobidy", "Sandro", "Princio"))
+            .put("message", "Nom d'utilisateurs récupérés avec succès")
             .toString();
     }
 
@@ -23,7 +23,7 @@ public class UserApiController {
         return new JsonBuilder()
             .put("status", "success")
             .put("count", 3)
-            .put("message", "Total number of users")
+            .put("message", "Total de nombre d'utilisateurs récupérés avec succès")
             .toString();
     }
 

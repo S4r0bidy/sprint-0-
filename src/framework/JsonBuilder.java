@@ -16,12 +16,13 @@ public class JsonBuilder {
     public String toString() {
         StringBuilder json = new StringBuilder();
         json.append("{");
-        
+
         boolean first = true;
         for (Map.Entry<String, Object> entry : data.entrySet()) {
-            if (!first) json.append(",");
+            if (!first)
+                json.append(",");
             json.append("\"").append(entry.getKey()).append("\":");
-            
+
             Object val = entry.getValue();
             if (val instanceof String) {
                 json.append("\"").append(escapeJson(val.toString())).append("\"");
@@ -36,7 +37,7 @@ public class JsonBuilder {
             }
             first = false;
         }
-        
+
         json.append("}");
         return json.toString();
     }
@@ -45,7 +46,8 @@ public class JsonBuilder {
         StringBuilder json = new StringBuilder("[");
         boolean first = true;
         for (Object item : list) {
-            if (!first) json.append(",");
+            if (!first)
+                json.append(",");
             if (item instanceof String) {
                 json.append("\"").append(escapeJson(item.toString())).append("\"");
             } else if (item instanceof Number || item instanceof Boolean) {
@@ -61,8 +63,8 @@ public class JsonBuilder {
 
     private String escapeJson(String str) {
         return str.replace("\\", "\\\\")
-                  .replace("\"", "\\\"")
-                  .replace("\n", "\\n")
-                  .replace("\r", "\\r");
+                .replace("\"", "\\\"")
+                .replace("\n", "\\n")
+                .replace("\r", "\\r");
     }
 }
