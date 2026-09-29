@@ -9,6 +9,8 @@ import java.io.IOException;
 import java.lang.reflect.Method;
 import java.util.Map;
 
+import framework.annotation.ApiController;
+
 @WebServlet("/*")
 public class FrontController extends HttpServlet {
 
@@ -46,6 +48,15 @@ public class FrontController extends HttpServlet {
         try {
             Mapping mapping = routes.get(url);
             Class<?> controllerClass = Class.forName(mapping.getClassName());
+
+            if (!controllerClass.isAnnotationPresent(ApiController.class)) {
+                res.setContentType("application/json; charset=UTF-8");
+                res.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+                res.getWriter().write("{\"status\":\"error\",\"message\":\"Controller non autorisé: "
+                        + controllerClass.getName() + " n'est pas annoté @ApiController\"}");
+                return;
+            }
+
             Object controller = controllerClass.getDeclaredConstructor().newInstance();
 
             Method actionMethod = controllerClass.getDeclaredMethod(mapping.getMethodName());
