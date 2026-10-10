@@ -1,6 +1,7 @@
 package controller;
 
 import framework.JsonBuilder;
+import framework.StaticBindingDemo;
 import framework.annotation.ApiController;
 import framework.annotation.GetMapping;
 import framework.annotation.PostMapping;
@@ -34,5 +35,10 @@ public class UserApiController {
             .put("id", 4)
             .put("message", "User created successfully")
             .toString();
+    }
+
+    @GetMapping("/api/static-binding")
+    public String staticBinding() {
+        return StaticBindingDemo.buildResponse();
     }
 }
