@@ -1,5 +1,6 @@
 package controller;
 
+import framework.DynamicBindingDemo;
 import framework.JsonBuilder;
 import framework.StaticBindingDemo;
 import framework.annotation.ApiController;
@@ -40,5 +41,10 @@ public class UserApiController {
     @GetMapping("/api/static-binding")
     public String staticBinding() {
         return StaticBindingDemo.buildResponse();
+    }
+
+    @GetMapping("/api/dynamic-binding")
+    public String dynamicBinding() {
+        return DynamicBindingDemo.buildResponse();
     }
 }

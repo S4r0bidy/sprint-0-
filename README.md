@@ -12,6 +12,7 @@ Un framework API REST minimaliste en Java avec support des annotations pour le r
 - **GetMapping / PostMapping** : Annotations pour mapper les routes HTTP
 - **JsonBuilder** : Utilitaire pour construire les réponses JSON
 - **StaticBindingDemo** : Illustration du concept de binding statique
+- **DynamicBindingDemo** : Illustration du concept de binding dynamique
 
 ### Structure
 
@@ -25,6 +26,7 @@ src/
     ├── Mapping.java              # Classe pour stocker les mappings
     ├── JsonBuilder.java          # Constructeur JSON
     ├── StaticBindingDemo.java    # Démo binding statique
+    ├── DynamicBindingDemo.java   # Démo binding dynamique
     └── annotation/
         ├── ApiController.java    # Annotation contrôleur
         ├── GetMapping.java       # Annotation GET
@@ -70,6 +72,7 @@ public class UserApiController {
 - `GET /api/users/count` - Récupère le nombre d'utilisateurs
 - `POST /api/users` - Crée un nouvel utilisateur
 - `GET /api/static-binding` - Illustre le concept de binding statique
+- `GET /api/dynamic-binding` - Illustre le concept de binding dynamique
 
 ## Concept : Binding statique
 
@@ -95,8 +98,28 @@ overloaded(a);  // -> overloaded(Object)
 overloaded(b);  // -> overloaded(String)
 ```
 
-> Le **binding dynamique** (méthodes `override` choisies selon le type réel à
-> l'exécution) n'est pas traité dans cette version.
+## Concept : Binding dynamique
+
+Le **binding dynamique** (ou *late binding* / *dynamic dispatch*) désigne le fait
+que la méthode réellement exécutée est choisie **à l'exécution**, en fonction du
+**type réel** (la classe effective) de l'objet, et non du type déclaré de la
+référence. Il s'applique aux méthodes **redéfinies** (`override`) — le contraire
+du binding statique, qui concerne les méthodes `static`, `private`, `final` et la
+surcharge.
+
+Exemple (redéfinition résolue à l'exécution) :
+
+```java
+class Animal   { String makeSound() { return "un son generique"; } }
+class Dog extends Animal { @Override String makeSound() { return "Woof"; } }
+class Cat extends Animal { @Override String makeSound() { return "Miaou"; } }
+
+Animal a = new Dog();  // type déclaré : Animal, type réel : Dog
+a.makeSound();         // -> "Woof"   (choisi à l'exécution)
+```
+
+> Le binding statique (méthodes `static`, `private`, `final` et surcharge
+> décidée à la compilation) est traité dans la section précédente.
 
 ## Réponses
 
@@ -112,8 +135,9 @@ Toutes les réponses sont au format JSON :
 
 ## Fonctionnalités
 
-✅ Routage automatique via annotations  
-✅ Support GET et POST  
-✅ Génération JSON automatique  
-✅ Gestion des erreurs en JSON  
+✅ Routage automatique via annotations
+✅ Support GET et POST
+✅ Génération JSON automatique
+✅ Gestion des erreurs en JSON
 ✅ Logging des requêtes
+✅ Démos des concepts de binding statique et dynamique
