@@ -37,20 +37,15 @@ public class DynamicBindingDemo {
         }
     }
 
-    public static String speak(Animal animal) {
-        // Appel polymorphe : resolution a l'execution.
-        return animal.describe() + " dit : " + animal.makeSound();
-    }
-
     public static String buildResponse() {
 
         Animal animal = new Animal();
         Animal dog = new Dog();
         Animal cat = new Cat();
 
-        String animalResult = speak(animal); 
-        String dogResult = speak(dog);
-        String catResult = speak(cat); 
+        String animalResult = animal.makeSound();
+        String dogResult = dog.makeSound();
+        String catResult = cat.makeSound();
 
         return new JsonBuilder()
                 .put("status", "success")
