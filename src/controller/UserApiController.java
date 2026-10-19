@@ -2,10 +2,12 @@ package controller;
 
 import framework.DynamicBindingDemo;
 import framework.JsonBuilder;
+import framework.UploadedFile;
 import framework.StaticBindingDemo;
 import framework.annotation.ApiController;
 import framework.annotation.GetMapping;
 import framework.annotation.PostMapping;
+import framework.annotation.RequestFile;
 import java.util.Arrays;
 
 @ApiController
@@ -35,6 +37,17 @@ public class UserApiController {
             .put("status", "success")
             .put("id", 4)
             .put("message", "User created successfully")
+            .toString();
+    }
+
+    @PostMapping("/api/upload")
+    public String upload(@RequestFile("file") UploadedFile file) {
+        return new JsonBuilder()
+            .put("status", "success")
+            .put("filename", file.getOriginalFilename())
+            .put("contentType", file.getContentType())
+            .put("size", file.getSize())
+            .put("message", "Fichier reçu avec succès")
             .toString();
     }
 
