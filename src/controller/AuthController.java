@@ -62,6 +62,8 @@ public class AuthController {
         session.setAttribute("AUTH_USER_ID", user.getId());
         session.setAttribute("AUTH_USERNAME", user.getUsername());
 
+        session.setAttribute("AUTH_ROLE", user.getRole());
+
         res.setStatus(HttpServletResponse.SC_OK);
         res.setContentType("application/json;charset=UTF-8");
         res.getWriter().write(

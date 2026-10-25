@@ -15,6 +15,8 @@ import javax.servlet.http.HttpSession;
 
 import framework.annotation.Authenticated;
 
+import framework.annotation.RoleRequired;
+
 @ApiController
 public class UserApiController {
 
@@ -128,6 +130,15 @@ public class UserApiController {
         return new JsonBuilder()
                 .put("status", "success")
                 .put("message", "Accès autorisé")
+                .toString();
+    }
+
+    @RoleRequired("ADMIN")
+    @GetMapping("/api/admin/dashboard")
+    public String adminDashboard() {
+        return new JsonBuilder()
+                .put("status", "success")
+                .put("message", "Bienvenue dans l'espace administrateur")
                 .toString();
     }
 

@@ -13,6 +13,7 @@ import java.lang.reflect.Parameter;
 import java.util.Map;
 import framework.annotation.ApiController;
 import framework.annotation.RequestFile;
+import framework.annotation.RoleRequired;
 import framework.annotation.Session;
 import javax.servlet.http.HttpSession;
 
@@ -72,16 +73,46 @@ public class FrontController extends HttpServlet {
                     controllerClass,
                     mapping.getMethodName());
 
-            // Vérification de l'authentification AVANT l'exécution
+            // Vérification des annotations @Authenticated et @RoleRequired
+            // Si la méthode est annotée avec @Authenticated, vérifie si l'utilisateur est authentifié
             if (actionMethod.isAnnotationPresent(Authenticated.class)
                     && !isAuthenticated(req)) {
 
-                res.setContentType("application/json; charset=UTF-8");
                 res.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                res.setContentType("application/json; charset=UTF-8");
                 res.getWriter().write(
                         "{\"status\":\"error\","
                                 + "\"message\":\"Authentification requise\"}");
                 return;
+            }
+
+            RoleRequired roleRequired = actionMethod.getAnnotation(RoleRequired.class);
+
+            if (roleRequired != null) {
+
+                // Une route avec un rôle requis exige aussi une connexion.
+                if (!isAuthenticated(req)) {
+                    res.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                    res.setContentType("application/json; charset=UTF-8");
+                    res.getWriter().write(
+                            "{\"status\":\"error\","
+                                    + "\"message\":\"Authentification requise\"}");
+                    return;
+                }
+
+                HttpSession session = req.getSession(false);
+                Object storedRole = session.getAttribute("AUTH_ROLE");
+
+                if (!(storedRole instanceof String)
+                        || !roleRequired.value().equals(storedRole)) {
+
+                    res.setStatus(HttpServletResponse.SC_FORBIDDEN);
+                    res.setContentType("application/json; charset=UTF-8");
+                    res.getWriter().write(
+                            "{\"status\":\"error\","
+                                    + "\"message\":\"Accès interdit : rôle insuffisant\"}");
+                    return;
+                }
             }
 
             // Exécution normale de l'action
