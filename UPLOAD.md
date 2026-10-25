@@ -18,3 +18,4 @@ public String upload(@RequestFile("file") UploadedFile file) {
 La route de démonstration est `POST /api/upload`. Le framework injecte aussi
 automatiquement `HttpServletRequest` et `HttpServletResponse` lorsqu'ils sont
 déclarés comme paramètres d'une action.
+

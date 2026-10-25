@@ -2,13 +2,16 @@ package controller;
 
 import framework.DynamicBindingDemo;
 import framework.JsonBuilder;
-import framework.UploadedFile;
 import framework.StaticBindingDemo;
+import framework.UploadedFile;
 import framework.annotation.ApiController;
 import framework.annotation.GetMapping;
 import framework.annotation.PostMapping;
 import framework.annotation.RequestFile;
 import java.util.Arrays;
+import framework.SessionData;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpSession;
 
 @ApiController
 public class UserApiController {
@@ -60,4 +63,62 @@ public class UserApiController {
     public String dynamicBinding() {
         return DynamicBindingDemo.buildResponse();
     }
+
+    
+@PostMapping("/api/session/demo")
+public String createSession(HttpServletRequest request) {
+    SessionData session = SessionData.get(request);
+
+    session.set("username", "Sarobidy");
+    session.set("role", "USER");
+
+    return new JsonBuilder()
+        .put("status", "success")
+        .put("message", "Session créée")
+        .put("username", session.getString("username"))
+        .put("role", session.getString("role"))
+        .toString();
+}
+
+@GetMapping("/api/session")
+public String getSessionInfo(HttpServletRequest request) {
+    HttpSession httpSession = request.getSession(false);
+
+    if (httpSession == null) {
+        return new JsonBuilder()
+            .put("status", "error")
+            .put("message", "Aucune session active")
+            .toString();
+    }
+
+    SessionData session = SessionData.get(request);
+
+    if (!session.contains("username")) {
+        return new JsonBuilder()
+            .put("status", "error")
+            .put("message", "Aucune donnée utilisateur en session")
+            .toString();
+    }
+
+    return new JsonBuilder()
+        .put("status", "success")
+        .put("username", session.getString("username"))
+        .put("role", session.getString("role"))
+        .toString();
+}
+
+@PostMapping("/api/logout")
+public String logout(HttpServletRequest request) {
+    HttpSession session = request.getSession(false);
+
+    if (session != null) {
+        session.invalidate();
+    }
+
+    return new JsonBuilder()
+        .put("status", "success")
+        .put("message", "Déconnexion effectuée")
+        .toString();
+}
+
 }
