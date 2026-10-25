@@ -16,6 +16,7 @@ import framework.annotation.RequestFile;
 import framework.annotation.Session;
 import javax.servlet.http.HttpSession;
 
+import framework.annotation.Authenticated;
 
 @WebServlet("/*")
 @MultipartConfig(maxFileSize = 10 * 1024 * 1024, maxRequestSize = 12 * 1024 * 1024)
@@ -67,8 +68,26 @@ public class FrontController extends HttpServlet {
 
             Object controller = controllerClass.getDeclaredConstructor().newInstance();
 
-            Method actionMethod = findActionMethod(controllerClass, mapping.getMethodName());
-            Object result = actionMethod.invoke(controller, buildArguments(actionMethod, req, res));
+            Method actionMethod = findActionMethod(
+                    controllerClass,
+                    mapping.getMethodName());
+
+            // Vérification de l'authentification AVANT l'exécution
+            if (actionMethod.isAnnotationPresent(Authenticated.class)
+                    && !isAuthenticated(req)) {
+
+                res.setContentType("application/json; charset=UTF-8");
+                res.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                res.getWriter().write(
+                        "{\"status\":\"error\","
+                                + "\"message\":\"Authentification requise\"}");
+                return;
+            }
+
+            // Exécution normale de l'action
+            Object result = actionMethod.invoke(
+                    controller,
+                    buildArguments(actionMethod, req, res));
 
             // Réponse JSON
             res.setContentType("application/json; charset=UTF-8");
@@ -83,6 +102,13 @@ public class FrontController extends HttpServlet {
         }
     }
 
+    private boolean isAuthenticated(HttpServletRequest req) {
+        HttpSession session = req.getSession(false);
+
+        return session != null
+                && session.getAttribute("AUTH_USER_ID") != null;
+    }
+
     private Method findActionMethod(Class<?> controllerClass, String methodName) {
         for (Method method : controllerClass.getDeclaredMethods()) {
             if (method.getName().equals(methodName))
@@ -92,94 +118,79 @@ public class FrontController extends HttpServlet {
     }
 
     private Object[] buildArguments(Method actionMethod, HttpServletRequest req,
-            HttpServletResponse res) throws IOException {
-        
-private Object[] buildArguments(
-        Method actionMethod,
-        HttpServletRequest req,
-        HttpServletResponse res
-) throws IOException, ServletException {
+            HttpServletResponse res) throws IOException, ServletException {
 
-    Parameter[] parameters = actionMethod.getParameters();
-    Object[] arguments = new Object[parameters.length];
+        Parameter[] parameters = actionMethod.getParameters();
+        Object[] arguments = new Object[parameters.length];
 
-    for (int i = 0; i < parameters.length; i++) {
-        Parameter parameter = parameters[i];
-        Class<?> type = parameter.getType();
+        for (int i = 0; i < parameters.length; i++) {
+            Parameter parameter = parameters[i];
+            Class<?> type = parameter.getType();
 
-        // 1. Injection de HttpServletRequest
-        if (type.equals(HttpServletRequest.class)) {
-            arguments[i] = req;
-        }
+            // 1. Injection de HttpServletRequest
+            if (type.equals(HttpServletRequest.class)) {
+                arguments[i] = req;
+            }
 
-        // 2. Injection de HttpServletResponse
-        else if (type.equals(HttpServletResponse.class)) {
-            arguments[i] = res;
-        }
+            // 2. Injection de HttpServletResponse
+            else if (type.equals(HttpServletResponse.class)) {
+                arguments[i] = res;
+            }
 
-        // 3. Injection d'un fichier uploadé
-        else if (type.equals(UploadedFile.class)) {
-            RequestFile annotation =
-                    parameter.getAnnotation(RequestFile.class);
+            // 3. Injection d'un fichier uploadé
+            else if (type.equals(UploadedFile.class)) {
+                RequestFile annotation = parameter.getAnnotation(RequestFile.class);
 
-            String fieldName =
-                    annotation == null ? "file" : annotation.value();
+                String fieldName = annotation == null ? "file" : annotation.value();
 
-            Part part = req.getPart(fieldName);
+                Part part = req.getPart(fieldName);
 
-            if (part == null || part.getSize() == 0) {
+                if (part == null || part.getSize() == 0) {
+                    throw new IllegalArgumentException(
+                            "Fichier manquant : " + fieldName);
+                }
+
+                arguments[i] = UploadedFile.fromPart(part);
+            }
+
+            // 4. Injection d'un attribut de session
+            else if (parameter.isAnnotationPresent(Session.class)) {
+                Session annotation = parameter.getAnnotation(Session.class);
+
+                HttpSession httpSession = req.getSession(false);
+
+                if (httpSession == null) {
+                    throw new IllegalStateException(
+                            "Aucune session active pour la clé : "
+                                    + annotation.value());
+                }
+
+                Object value = httpSession.getAttribute(annotation.value());
+
+                if (value == null) {
+                    throw new IllegalStateException(
+                            "Attribut absent de la session : "
+                                    + annotation.value());
+                }
+
+                if (!type.isInstance(value)) {
+                    throw new IllegalArgumentException(
+                            "Type incompatible pour l'attribut de session : "
+                                    + annotation.value());
+                }
+
+                arguments[i] = value;
+            }
+
+            // 5. Paramètre non pris en charge
+            else {
                 throw new IllegalArgumentException(
-                        "Fichier manquant : " + fieldName
-                );
+                        "Paramètre non supporté dans l'action : "
+                                + type.getName());
             }
-
-            arguments[i] = UploadedFile.fromPart(part);
         }
 
-        // 4. Injection d'un attribut de session
-        else if (parameter.isAnnotationPresent(Session.class)) {
-            Session annotation = parameter.getAnnotation(Session.class);
-
-            HttpSession httpSession = req.getSession(false);
-
-            if (httpSession == null) {
-                throw new IllegalStateException(
-                        "Aucune session active pour la clé : "
-                                + annotation.value()
-                );
-            }
-
-            Object value =
-                    httpSession.getAttribute(annotation.value());
-
-            if (value == null) {
-                throw new IllegalStateException(
-                        "Attribut absent de la session : "
-                                + annotation.value()
-                );
-            }
-
-            if (!type.isInstance(value)) {
-                throw new IllegalArgumentException(
-                        "Type incompatible pour l'attribut de session : "
-                                + annotation.value()
-                );
-            }
-
-            arguments[i] = value;
-        }
-
-        // 5. Paramètre non pris en charge
-        else {
-            throw new IllegalArgumentException(
-                    "Paramètre non supporté dans l'action : "
-                            + type.getName()
-            );
-        }
+        return arguments;
     }
 
-    return arguments;
-}
-
-    }
 }
