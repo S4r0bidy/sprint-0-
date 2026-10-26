@@ -16,7 +16,6 @@ import framework.annotation.RequestFile;
 import framework.annotation.Session;
 import javax.servlet.http.HttpSession;
 
-
 @WebServlet("/*")
 @MultipartConfig(maxFileSize = 10 * 1024 * 1024, maxRequestSize = 12 * 1024 * 1024)
 public class FrontController extends HttpServlet {
@@ -92,14 +91,8 @@ public class FrontController extends HttpServlet {
     }
 
     private Object[] buildArguments(Method actionMethod, HttpServletRequest req,
-            HttpServletResponse res) throws IOException {
+            HttpServletResponse res) throws IOException, ServletException {
         
-private Object[] buildArguments(
-        Method actionMethod,
-        HttpServletRequest req,
-        HttpServletResponse res
-) throws IOException, ServletException {
-
     Parameter[] parameters = actionMethod.getParameters();
     Object[] arguments = new Object[parameters.length];
 
@@ -182,4 +175,3 @@ private Object[] buildArguments(
 }
 
     }
-}

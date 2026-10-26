@@ -107,18 +107,92 @@ public String getSessionInfo(HttpServletRequest request) {
         .toString();
 }
 
-@PostMapping("/api/logout")
-public String logout(HttpServletRequest request) {
-    HttpSession session = request.getSession(false);
+    @PostMapping("/api/logout")
+    public String logout(HttpServletRequest request) {
+        HttpSession session = request.getSession(false);
 
-    if (session != null) {
-        session.invalidate();
+        if (session != null) {
+            session.invalidate();
+        }
+
+        return new JsonBuilder()
+            .put("status", "success")
+            .put("message", "Déconnexion effectuée")
+            .toString();
     }
 
-    return new JsonBuilder()
-        .put("status", "success")
-        .put("message", "Déconnexion effectuée")
-        .toString();
-}
+    @GetMapping("/api/session/id")
+    public String getSessionId(HttpServletRequest request) {
+        HttpSession httpSession = request.getSession(false);
+        if (httpSession == null) {
+            return new JsonBuilder()
+                .put("status", "error")
+                .put("message", "Aucune session active")
+                .put("hasSession", false)
+                .toString();
+        }
+        return new JsonBuilder()
+            .put("status", "success")
+            .put("sessionId", httpSession.getId())
+            .put("creationTime", httpSession.getCreationTime())
+            .put("lastAccessedTime", httpSession.getLastAccessedTime())
+            .put("maxInactiveInterval", httpSession.getMaxInactiveInterval())
+            .put("isNew", httpSession.isNew())
+            .put("hasSession", true)
+            .toString();
+    }
 
-}
+    @GetMapping("/api/session/attributes")
+    public String getAllSessionAttributes(HttpServletRequest request) {
+        HttpSession httpSession = request.getSession(false);
+        if (httpSession == null) {
+            return new JsonBuilder()
+                .put("status", "error")
+                .put("message", "Aucune session active")
+                .toString();
+        }
+        JsonBuilder builder = new JsonBuilder()
+            .put("status", "success")
+            .put("sessionId", httpSession.getId());
+        java.util.Enumeration<String> names = httpSession.getAttributeNames();
+        while (names.hasMoreElements()) {
+            String name = names.nextElement();
+            Object value = httpSession.getAttribute(name);
+            if (value == null) {
+                builder.put(name, null);
+            } else {
+                builder.put(name, value.toString());
+            }
+        }
+        return builder.toString();
+    }
+
+    @GetMapping("/api/session/test")
+    public String testSession(HttpServletRequest request) {
+        HttpSession httpSession = request.getSession(true);
+        SessionData session = SessionData.get(request);
+
+        session.set("testKey", "testValue-" + System.currentTimeMillis());
+
+        Integer count = null;
+        Object countObj = session.get("visitCount");
+        if (countObj instanceof Number) {
+            count = ((Number) countObj).intValue();
+        }
+        if (count == null) {
+            count = 0;
+        }
+        count = count + 1;
+        session.set("visitCount", count);
+
+        return new JsonBuilder()
+            .put("status", "success")
+            .put("sessionId", httpSession.getId())
+            .put("isNew", httpSession.isNew())
+            .put("visitCount", count)
+            .put("testKey", session.getString("testKey"))
+            .put("message", "Test de session effectué")
+            .toString();
+    }
+
+    }
