@@ -16,6 +16,8 @@ javac ^
 -d build ^
 src\framework\*.java ^
 src\framework\annotation\*.java ^
+src\model\*.java ^
+src\service\*.java ^
 src\controller\*.java
 
 if errorlevel 1 (

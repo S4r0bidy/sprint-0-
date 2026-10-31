@@ -11,6 +11,7 @@ import java.io.IOException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import framework.annotation.ApiController;
 import framework.annotation.RequestFile;
 import framework.annotation.RoleRequired;
@@ -22,6 +23,12 @@ import framework.annotation.Authenticated;
 @WebServlet("/*")
 @MultipartConfig(maxFileSize = 10 * 1024 * 1024, maxRequestSize = 12 * 1024 * 1024)
 public class FrontController extends HttpServlet {
+
+    /**
+     * Registre des instances de contrôleurs : une seule instance par classe.
+     * Le servlet étant lui-même unique, ce cache transforme les contrôleurs en singletons.
+     */
+    private final Map<String, Object> controllerInstances = new ConcurrentHashMap<>();
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse res) throws ServletException, IOException {
@@ -67,7 +74,7 @@ public class FrontController extends HttpServlet {
                 return;
             }
 
-            Object controller = controllerClass.getDeclaredConstructor().newInstance();
+            Object controller = getControllerInstance(controllerClass);
 
             Method actionMethod = findActionMethod(
                     controllerClass,
@@ -138,6 +145,24 @@ public class FrontController extends HttpServlet {
 
         return session != null
                 && session.getAttribute("AUTH_USER_ID") != null;
+    }
+
+    /**
+     * Retourne l'instance unique du contrôleur demandé.
+     * La création est thread-safe : une seule instance est créée par classe,
+     * même si plusieurs requêtes arrivent en même temps.
+     */
+    private Object getControllerInstance(Class<?> controllerClass) {
+        return controllerInstances.computeIfAbsent(
+                controllerClass.getName(),
+                className -> {
+                    try {
+                        return controllerClass.getDeclaredConstructor().newInstance();
+                    } catch (ReflectiveOperationException e) {
+                        throw new IllegalStateException(
+                                "Impossible d'instancier le contrôleur : " + className, e);
+                    }
+                });
     }
 
     private Method findActionMethod(Class<?> controllerClass, String methodName) {

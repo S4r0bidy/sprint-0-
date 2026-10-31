@@ -1,53 +1,52 @@
-
 package controller;
 
-import framework.annotation.PostMapping;
-import framework.annotation.GetMapping;
+import framework.JsonBuilder;
+import framework.annotation.ApiController;
 import framework.annotation.Authenticated;
+import framework.annotation.GetMapping;
+import framework.annotation.PostMapping;
 import model.User;
 import service.AuthService;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
-import java.io.IOException;
 
+@ApiController
 public class AuthController {
 
     private final AuthService authService;
 
     public AuthController() {
-        // À remplacer par l'initialisation adaptée
-        // à ton implémentation du service et du repository.
-        this.authService = /* ton implémentation */;
+        this.authService = AuthService.getInstance();
     }
 
     @PostMapping("/login")
-    public void login(
+    public String login(
             HttpServletRequest req,
             HttpServletResponse res
-    ) throws IOException {
+    ) {
 
         String username = req.getParameter("username");
         String password = req.getParameter("password");
 
         if (username == null || username.trim().isEmpty()
                 || password == null || password.isEmpty()) {
-            res.sendError(
-                HttpServletResponse.SC_BAD_REQUEST,
-                "Identifiants manquants"
-            );
-            return;
+            res.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+            return new JsonBuilder()
+                    .put("status", "error")
+                    .put("message", "Identifiants manquants")
+                    .toString();
         }
 
         User user = authService.authenticate(username, password);
 
         if (user == null) {
-            res.sendError(
-                HttpServletResponse.SC_UNAUTHORIZED,
-                "Identifiants invalides"
-            );
-            return;
+            res.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            return new JsonBuilder()
+                    .put("status", "error")
+                    .put("message", "Identifiants invalides")
+                    .toString();
         }
 
         // Évite de conserver l'ancien identifiant de session
@@ -61,21 +60,20 @@ public class AuthController {
         HttpSession session = req.getSession(true);
         session.setAttribute("AUTH_USER_ID", user.getId());
         session.setAttribute("AUTH_USERNAME", user.getUsername());
-
         session.setAttribute("AUTH_ROLE", user.getRole());
 
         res.setStatus(HttpServletResponse.SC_OK);
-        res.setContentType("application/json;charset=UTF-8");
-        res.getWriter().write(
-            "{\"status\":\"success\",\"message\":\"Connexion réussie\"}"
-        );
+        return new JsonBuilder()
+                .put("status", "success")
+                .put("message", "Connexion réussie")
+                .toString();
     }
 
     @PostMapping("/logout")
-    public void logout(
+    public String logout(
             HttpServletRequest req,
             HttpServletResponse res
-    ) throws IOException {
+    ) {
 
         HttpSession session = req.getSession(false);
 
@@ -84,33 +82,33 @@ public class AuthController {
         }
 
         res.setStatus(HttpServletResponse.SC_OK);
-        res.setContentType("application/json;charset=UTF-8");
-        res.getWriter().write(
-            "{\"status\":\"success\",\"message\":\"Déconnexion réussie\"}"
-        );
+        return new JsonBuilder()
+                .put("status", "success")
+                .put("message", "Déconnexion réussie")
+                .toString();
     }
 
     @Authenticated
     @GetMapping("/me")
-    public void me(
+    public String me(
             HttpServletRequest req,
             HttpServletResponse res
-    ) throws IOException {
+    ) {
 
         HttpSession session = req.getSession(false);
 
-        res.setContentType("application/json;charset=UTF-8");
-        res.getWriter().write(
-            "{\"username\":\""
-                + escapeJson(
-                    (String) session.getAttribute("AUTH_USERNAME")
-                )
-                + "\"}"
-        );
-    }
+        if (session == null) {
+            res.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            return new JsonBuilder()
+                    .put("status", "error")
+                    .put("message", "Authentification requise")
+                    .toString();
+        }
 
-    private String escapeJson(String value) {
-        return value.replace("\\", "\\\\")
-                    .replace("\"", "\\\"");
+        Object username = session.getAttribute("AUTH_USERNAME");
+
+        return new JsonBuilder()
+                .put("username", username == null ? "" : username.toString())
+                .toString();
     }
 }
